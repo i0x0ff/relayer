@@ -59,7 +59,7 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 			s.clientsMu.Lock()
 			if _, ok := s.clients[conn]; ok {
 				fmt.Println("Close connection in defer reder func")
-				s.Log.Errorf("ip=%s, origin=", err, conn.RemoteAddr().String(), r.Header["Origin"])
+				s.Log.Errorf("remote=%s, forwarded=%s origin=%s", conn.RemoteAddr().String(), r.Header.Get("X-FORWARDED-FOR"), r.Header["Origin"])
 				conn.Close()
 				delete(s.clients, conn)
 
@@ -248,7 +248,7 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 				fmt.Println("Number of clients", len(s.clients))
 				err := ws.WriteMessage(websocket.PingMessage, nil)
 				if err != nil {
-					s.Log.Errorf("error writing ping: %v; closing websocket; ip=%s, origin=", err, conn.RemoteAddr(), r.Header["Origin"])
+					s.Log.Errorf("error writing ping: %v; closing websocket; remote=%s, forwarded=%s origin=", err, conn.RemoteAddr(), r.Header["X-FORWARDED-FOR"], r.Header["Origin"])
 					return
 				}
 				GetListenerCount()
