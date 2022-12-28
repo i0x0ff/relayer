@@ -58,8 +58,11 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 			ticker.Stop()
 			s.clientsMu.Lock()
 			if _, ok := s.clients[conn]; ok {
+				fmt.Println("Close connection in defer reder func")
 				conn.Close()
 				delete(s.clients, conn)
+
+				removeListener(ws)
 			}
 			s.clientsMu.Unlock()
 		}()
@@ -205,6 +208,8 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 					}
 
 					setListener(id, ws, filters)
+					GetListenerCount()
+					fmt.Println("Number of clients", len(s.clients))
 					break
 				case "CLOSE":
 					var id string
@@ -214,7 +219,7 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 						return
 					}
 
-					removeListener(ws, id)
+					removeListenerId(ws, id)
 					break
 				default:
 					if cwh, ok := s.relay.(CustomWebSocketHandler); ok {
@@ -238,11 +243,15 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 		for {
 			select {
 			case <-ticker.C:
+				GetListenerCount()
+				fmt.Println("Number of clients", len(s.clients))
 				err := ws.WriteMessage(websocket.PingMessage, nil)
 				if err != nil {
 					s.Log.Errorf("error writing ping: %v; closing websocket", err)
 					return
 				}
+				GetListenerCount()
+				fmt.Println("Number of clients", len(s.clients))
 			}
 		}
 	}()
