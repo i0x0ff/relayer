@@ -10,6 +10,7 @@ import (
 	"github.com/fiatjaf/relayer/storage/postgresql"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/nbd-wtf/go-nostr"
+	"github.com/nbd-wtf/go-nostr/nip11"
 )
 
 type Relay struct {
@@ -20,6 +21,19 @@ type Relay struct {
 
 func (r *Relay) Name() string {
 	return "BasicRelay"
+}
+
+func (r *Relay) GetNIP11InformationDocument() nip11.RelayInformationDocument {
+	info := nip11.RelayInformationDocument{
+		Name:          r.Name(),
+		Description:   "relay powered by the relayer framework",
+		PubKey:        "sup",
+		Contact:       "dawg",
+		SupportedNIPs: []int{9, 15, 16},
+		Software:      "https://github.com/fiatjaf/relayer",
+		Version:       "1.33.7",
+	}
+	return info
 }
 
 func (r *Relay) Storage() relayer.Storage {
@@ -40,7 +54,7 @@ func (r *Relay) Init() error {
 
 		for {
 			time.Sleep(60 * time.Minute)
-			db.DB.Exec(`DELETE FROM event WHERE created_at < $1`, time.Now().AddDate(0, -3, 0)) // 3 months
+			db.DB.Exec(`DELETE FROM event WHERE created_at < ?`, time.Now().AddDate(0, -3, 0)) // 3 months
 		}
 	}()
 
