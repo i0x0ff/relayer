@@ -282,13 +282,16 @@ func (s *Server) stats(w http.ResponseWriter, r *http.Request) {
 	listeners := GetListeners()
 
 	type ListenerStat struct {
-		Ip     string `json:"ip"`
-		Origin string `json:"origin"`
+		Ip            string `json:"ip"`
+		Origin        string `json:"origin"`
+		Subscriptions int    `json:"subscriptions"`
 	}
 
 	var listenerStat []ListenerStat
-	for conn, _ := range listeners {
-		listenerStat = append(listenerStat, ListenerStat{Ip: conn.ip, Origin: conn.origin})
+	for conn, subs := range listeners {
+		subs := len(subs)
+		stat := ListenerStat{Ip: conn.ip, Origin: conn.origin, Subscriptions: subs}
+		listenerStat = append(listenerStat, stat)
 	}
 
 	type Stats struct {
