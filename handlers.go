@@ -63,7 +63,7 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 				conn.Close()
 				delete(s.clients, conn)
 
-				removeListener(ws)
+				// removeListener(ws)
 			}
 			s.clientsMu.Unlock()
 		}()
