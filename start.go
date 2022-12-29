@@ -128,7 +128,7 @@ func (s *Server) Start() error {
 func (s *Server) startListener(ln net.Listener) error {
 	// init the relay
 	if err := s.relay.Init(); err != nil {
-		return fmt.Errorf("relay init: %w", err)
+		return fmt.Errorf("relay ini1t: %w", err)
 	}
 	if err := s.relay.Storage().Init(); err != nil {
 		return fmt.Errorf("storage init: %w", err)
