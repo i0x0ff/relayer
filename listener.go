@@ -3,6 +3,7 @@ package relayer
 import (
 	"sync"
 
+	"github.com/gorilla/websocket"
 	"github.com/nbd-wtf/go-nostr"
 )
 
@@ -10,7 +11,13 @@ type Listener struct {
 	filters nostr.Filters
 }
 
-var listeners = make(map[*WebSocket]map[string]*Listener)
+type Connection struct {
+	conn   *websocket.Conn
+	ip     string
+	origin string
+}
+
+var listeners = make(map[*Connection]map[string]*Listener)
 var listenersMutex = sync.Mutex{}
 
 func GetListeningFilters() nostr.Filters {
@@ -46,7 +53,7 @@ func GetListeningFilters() nostr.Filters {
 	return respfilters
 }
 
-func setListener(id string, ws *WebSocket, filters nostr.Filters) {
+func setListener(id string, ws *Connection, filters nostr.Filters) {
 	listenersMutex.Lock()
 	defer func() {
 		listenersMutex.Unlock()
@@ -64,7 +71,7 @@ func setListener(id string, ws *WebSocket, filters nostr.Filters) {
 }
 
 // Remove a specific subscription id from listeners for a given ws client
-func removeListenerId(ws *WebSocket, id string) {
+func removeListenerId(ws *Connection, id string) {
 	listenersMutex.Lock()
 	defer func() {
 		listenersMutex.Unlock()
@@ -80,7 +87,7 @@ func removeListenerId(ws *WebSocket, id string) {
 }
 
 // Remove WebSocket conn from listeners
-func removeListener(ws *WebSocket) {
+func removeListener(ws *Connection) {
 	listenersMutex.Lock()
 	defer listenersMutex.Unlock()
 
@@ -101,7 +108,11 @@ func notifyListeners(event *nostr.Event) {
 			if !listener.filters.Match(event) {
 				continue
 			}
-			ws.WriteJSON([]interface{}{"EVENT", id, event})
+			ws.conn.WriteJSON([]interface{}{"EVENT", id, event})
 		}
 	}
+}
+
+func GetListeners() map[*Connection]map[string]*Listener {
+	return listeners
 }

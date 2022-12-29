@@ -52,6 +52,12 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 
 	ws := &WebSocket{conn: conn}
 
+	connection := &Connection{
+		conn:   conn,
+		ip:     r.Header.Get("X-FORWARDED-FOR"),
+		origin: r.Header.Get("Origin"),
+	}
+
 	// reader
 	go func() {
 		defer func() {
@@ -60,7 +66,7 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 			if _, ok := s.clients[conn]; ok {
 				conn.Close()
 				delete(s.clients, conn)
-				removeListener(ws)
+				removeListener(connection)
 			}
 			s.clientsMu.Unlock()
 		}()
@@ -205,7 +211,7 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 						ws.WriteJSON([]interface{}{"EOSE", id})
 					}
 
-					setListener(id, ws, filters)
+					setListener(id, connection, filters)
 					break
 				case "CLOSE":
 					var id string
@@ -215,7 +221,7 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 						return
 					}
 
-					removeListenerId(ws, id)
+					removeListenerId(connection, id)
 					break
 				default:
 					if cwh, ok := s.relay.(CustomWebSocketHandler); ok {
@@ -267,4 +273,33 @@ func (s *Server) handleNIP11(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(info)
+}
+
+func (s *Server) stats(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	activeClients := len(s.clients)
+	listeners := GetListeners()
+
+	type ListenerStat struct {
+		Ip     string `json:"ip"`
+		Origin string `json:"origin"`
+	}
+
+	var listenerStat []ListenerStat
+	for conn, _ := range listeners {
+		listenerStat = append(listenerStat, ListenerStat{Ip: conn.ip, Origin: conn.origin})
+	}
+
+	type Stats struct {
+		ActiveClients  int            `json:"activeClients"`
+		Listeners      int            `json:"listeners"`
+		ListenersStats []ListenerStat `json:"listenerStats"`
+	}
+
+	json.NewEncoder(w).Encode(Stats{
+		ActiveClients:  activeClients,
+		Listeners:      len(listeners),
+		ListenersStats: listenerStat,
+	})
 }
