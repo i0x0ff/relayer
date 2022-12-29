@@ -67,6 +67,13 @@ func setListener(id string, ws *WebSocket, filters nostr.Filters, r *http.Reques
 
 	subs_count_before := len(listeners[ws])
 
+	_, ok = subs[id]
+	if !ok {
+		fmt.Printf("Sub id=%s doesn't exist yet - add it", id)
+	} else {
+		fmt.Printf("Sub id=%s already eixsts - update it", id)
+	}
+
 	subs[id] = &Listener{
 		filters: filters,
 	}
