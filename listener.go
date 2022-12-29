@@ -2,6 +2,7 @@ package relayer
 
 import (
 	"fmt"
+	"net/http"
 	"sync"
 
 	"github.com/nbd-wtf/go-nostr"
@@ -52,7 +53,7 @@ func GetListeningFilters() nostr.Filters {
 	return respfilters
 }
 
-func setListener(id string, ws *WebSocket, filters nostr.Filters) {
+func setListener(id string, ws *WebSocket, filters nostr.Filters, r *http.Request) {
 	listenersMutex.Lock()
 	defer func() {
 		listenersMutex.Unlock()
@@ -64,9 +65,13 @@ func setListener(id string, ws *WebSocket, filters nostr.Filters) {
 		listeners[ws] = subs
 	}
 
+	subs_count_before := len(listeners[ws])
+
 	subs[id] = &Listener{
 		filters: filters,
 	}
+
+	fmt.Printf("Subs for %s increased from %d to %d\n", r.Header.Get("X-FORWARDED-FOR"), subs_count_before, len(listeners[ws]))
 }
 
 // Remove a specific subscription id from listeners for a given ws client

@@ -208,7 +208,7 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 						ws.WriteJSON([]interface{}{"EOSE", id})
 					}
 
-					setListener(id, ws, filters)
+					setListener(id, ws, filters, r)
 					GetListenerCount()
 					fmt.Println("Number of clients", len(s.clients))
 					break
