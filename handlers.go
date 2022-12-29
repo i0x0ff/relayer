@@ -63,7 +63,7 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 				conn.Close()
 				delete(s.clients, conn)
 
-				// removeListener(ws)
+				removeListener(ws)
 			}
 			s.clientsMu.Unlock()
 		}()
@@ -209,8 +209,8 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 					}
 
 					setListener(id, ws, filters, r)
-					GetListenerCount()
-					fmt.Println("Number of clients", len(s.clients))
+					// GetListenerCount()
+					// fmt.Println("Number of clients", len(s.clients))
 					break
 				case "CLOSE":
 					var id string
@@ -244,15 +244,15 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 		for {
 			select {
 			case <-ticker.C:
-				GetListenerCount()
-				fmt.Println("Number of clients", len(s.clients))
+				// GetListenerCount()
+				// fmt.Println("Number of clients", len(s.clients))
 				err := ws.WriteMessage(websocket.PingMessage, nil)
 				if err != nil {
 					s.Log.Errorf("error writing ping: %v; closing websocket; remote=%s, forwarded=%s origin=", err, conn.RemoteAddr(), r.Header["X-FORWARDED-FOR"], r.Header["Origin"])
 					return
 				}
-				GetListenerCount()
-				fmt.Println("Number of clients", len(s.clients))
+				// GetListenerCount()
+				// fmt.Println("Number of clients", len(s.clients))
 			}
 		}
 	}()
