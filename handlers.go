@@ -53,7 +53,7 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 	ws := &WebSocket{conn: conn}
 
 	connection := &Connection{
-		conn:   conn,
+		conn:   ws,
 		ip:     r.Header.Get("X-FORWARDED-FOR"),
 		origin: r.Header.Get("Origin"),
 	}

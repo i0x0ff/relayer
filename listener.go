@@ -3,7 +3,6 @@ package relayer
 import (
 	"sync"
 
-	"github.com/gorilla/websocket"
 	"github.com/nbd-wtf/go-nostr"
 )
 
@@ -12,7 +11,7 @@ type Listener struct {
 }
 
 type Connection struct {
-	conn   *websocket.Conn
+	conn   *WebSocket
 	ip     string
 	origin string
 }
