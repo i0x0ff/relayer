@@ -152,6 +152,5 @@ func (b PostgresBackend) QueryEvents(filter *nostr.Filter) (events []nostr.Event
 		evt.CreatedAt = time.Unix(timestamp, 0)
 		events = append(events, evt)
 	}
-
 	return events, nil
 }
