@@ -66,8 +66,9 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 			if _, ok := s.clients[conn]; ok {
 				conn.Close()
 				delete(s.clients, conn)
-				removeListener(connection)
 			}
+			removeListener(connection)
+			conn.Close()
 			s.clientsMu.Unlock()
 		}()
 
