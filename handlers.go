@@ -50,6 +50,9 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 	s.clients[conn] = struct{}{}
 	ticker := time.NewTicker(pingPeriod)
 
+	defer ticker.Stop()
+	defer conn.Close()
+
 	ws := &WebSocket{conn: conn}
 
 	connection := &Connection{
@@ -58,18 +61,28 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 		origin: r.Header.Get("Origin"),
 	}
 
+	defer func() {
+		s.clientsMu.Lock()
+		if _, ok := s.clients[conn]; ok {
+			// conn.Close()
+			delete(s.clients, conn)
+		}
+		s.clientsMu.Unlock()
+		removeListener(connection)
+	}()
+
 	// reader
 	go func() {
-		defer func() {
-			ticker.Stop()
-			s.clientsMu.Lock()
-			if _, ok := s.clients[conn]; ok {
-				conn.Close()
-				delete(s.clients, conn)
-				removeListener(connection)
-			}
-			s.clientsMu.Unlock()
-		}()
+		// defer func() {
+		// 	// ticker.Stop()
+		// 	s.clientsMu.Lock()
+		// 	if _, ok := s.clients[conn]; ok {
+		// 		// conn.Close()
+		// 		delete(s.clients, conn)
+		// 		removeListener(connection)
+		// 	}
+		// 	s.clientsMu.Unlock()
+		// }()
 
 		conn.SetReadLimit(maxMessageSize)
 		conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -237,12 +250,12 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 
 	// writer
 	go func() {
-		defer func() {
-			ticker.Stop()
-			conn.Close()
-			delete(s.clients, conn)
-			removeListener(connection)
-		}()
+		// defer func() {
+		// 	// ticker.Stop()
+		// 	// conn.Close()
+		// 	delete(s.clients, conn)
+		// 	removeListener(connection)
+		// }()
 
 		for {
 			select {
