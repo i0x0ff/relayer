@@ -240,6 +240,8 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			ticker.Stop()
 			conn.Close()
+			delete(s.clients, conn)
+			removeListener(connection)
 		}()
 
 		for {
