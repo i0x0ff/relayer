@@ -1,6 +1,7 @@
 package relayer
 
 import (
+	"net/http"
 	"sync"
 
 	"github.com/nbd-wtf/go-nostr"
@@ -11,9 +12,8 @@ type Listener struct {
 }
 
 type Connection struct {
-	conn   *WebSocket
-	ip     string
-	origin string
+	conn       *WebSocket
+	httpHeader *http.Header
 }
 
 var listeners = make(map[*Connection]map[string]*Listener)
@@ -23,9 +23,7 @@ func GetListeningFilters() nostr.Filters {
 	var respfilters = make(nostr.Filters, 0, len(listeners)*2)
 
 	listenersMutex.Lock()
-	defer func() {
-		listenersMutex.Unlock()
-	}()
+	defer listenersMutex.Unlock()
 
 	// here we go through all the existing listeners
 	for _, connlisteners := range listeners {
@@ -54,9 +52,7 @@ func GetListeningFilters() nostr.Filters {
 
 func setListener(id string, ws *Connection, filters nostr.Filters) {
 	listenersMutex.Lock()
-	defer func() {
-		listenersMutex.Unlock()
-	}()
+	defer listenersMutex.Unlock()
 
 	subs, ok := listeners[ws]
 	if !ok {
@@ -72,9 +68,7 @@ func setListener(id string, ws *Connection, filters nostr.Filters) {
 // Remove a specific subscription id from listeners for a given ws client
 func removeListenerId(ws *Connection, id string) {
 	listenersMutex.Lock()
-	defer func() {
-		listenersMutex.Unlock()
-	}()
+	defer listenersMutex.Unlock()
 
 	subs, ok := listeners[ws]
 	if ok {
@@ -98,9 +92,7 @@ func removeListener(ws *Connection) {
 
 func notifyListeners(event *nostr.Event) {
 	listenersMutex.Lock()
-	defer func() {
-		listenersMutex.Unlock()
-	}()
+	defer listenersMutex.Unlock()
 
 	for ws, subs := range listeners {
 		for id, listener := range subs {
@@ -112,6 +104,26 @@ func notifyListeners(event *nostr.Event) {
 	}
 }
 
-func GetListeners() map[*Connection]map[string]*Listener {
-	return listeners
+type ListenerStat struct {
+	Ip            string `json:"ip"`
+	Origin        string `json:"origin"`
+	Subscriptions int    `json:"subscriptions"`
+}
+
+func ListenerStats() []ListenerStat {
+	listenersMutex.Lock()
+	defer listenersMutex.Unlock()
+
+	var listenerStat []ListenerStat
+	for conn, subs := range listeners {
+		subs := len(subs)
+		stat := ListenerStat{
+			Ip:            conn.httpHeader.Get("X-FORWARDED-FOR"),
+			Origin:        conn.httpHeader.Get("Origin"),
+			Subscriptions: subs,
+		}
+		listenerStat = append(listenerStat, stat)
+	}
+
+	return listenerStat
 }

@@ -35,6 +35,8 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
+// TODO:
+// - listeners != activeClients when it actually should be
 func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 	store := s.relay.Storage()
 	advancedDeleter, _ := store.(AdvancedDeleter)
@@ -45,31 +47,34 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 		s.Log.Errorf("failed to upgrade websocket: %v", err)
 		return
 	}
+
 	s.clientsMu.Lock()
 	defer s.clientsMu.Unlock()
 	s.clients[conn] = struct{}{}
-	ticker := time.NewTicker(pingPeriod)
+	// ticker := time.NewTicker(pingPeriod)
 
 	ws := &WebSocket{conn: conn}
 
 	connection := &Connection{
-		conn:   ws,
-		ip:     r.Header.Get("X-FORWARDED-FOR"),
-		origin: r.Header.Get("Origin"),
+		conn:       ws,
+		httpHeader: &r.Header,
+		// ip:     *r.Header.Get("X-FORWARDED-FOR"),
+		// origin: *r.Header.Get("Origin"),
 	}
 
 	// reader
 	go func() {
 		defer func() {
-			ticker.Stop()
+			// ticker.Stop()
 			s.clientsMu.Lock()
+			defer s.clientsMu.Unlock()
 			if _, ok := s.clients[conn]; ok {
-				conn.Close()
+				conn.Close() // two closes? oO
 				delete(s.clients, conn)
 			}
+			fmt.Println("[defer 2] Listeners before", len(listeners))
 			removeListener(connection)
-			conn.Close()
-			s.clientsMu.Unlock()
+			fmt.Println("[defer 2] Listeners after", len(listeners))
 		}()
 
 		conn.SetReadLimit(maxMessageSize)
@@ -238,11 +243,16 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 
 	// writer
 	go func() {
+		ticker := time.NewTicker(pingPeriod)
 		defer func() {
-			ticker.Stop()
-			conn.Close()
+			fmt.Println("[defer 3] Listeners before", len(listeners))
+			s.clientsMu.Lock()
+			defer s.clientsMu.Unlock()
 			delete(s.clients, conn)
 			removeListener(connection)
+			fmt.Println("[defer 3] Listeners after", len(listeners))
+			ticker.Stop()
+			conn.Close()
 		}()
 
 		for {
@@ -282,20 +292,8 @@ func (s *Server) stats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	activeClients := len(s.clients)
-	listeners := GetListeners()
 
-	type ListenerStat struct {
-		Ip            string `json:"ip"`
-		Origin        string `json:"origin"`
-		Subscriptions int    `json:"subscriptions"`
-	}
-
-	var listenerStat []ListenerStat
-	for conn, subs := range listeners {
-		subs := len(subs)
-		stat := ListenerStat{Ip: conn.ip, Origin: conn.origin, Subscriptions: subs}
-		listenerStat = append(listenerStat, stat)
-	}
+	listenerStat := ListenerStats()
 
 	type Stats struct {
 		ActiveClients  int            `json:"activeClients"`
