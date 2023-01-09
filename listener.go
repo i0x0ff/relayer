@@ -52,10 +52,7 @@ func GetListeningFilters() nostr.Filters {
 }
 
 func getSubsCount(ws *Connection) int {
-	subs, ok := listeners[ws]
-	if !ok {
-		return 0
-	}
+	subs, _ := listeners[ws]
 	return len(subs)
 }
 
@@ -71,6 +68,9 @@ func setListener(id string, ws *Connection, filters nostr.Filters) {
 		subs = make(map[string]*Listener)
 		listeners[ws] = subs
 	}
+
+	fmt.Printf("[setListener] (%s) after count: %d\n", ip, len(listeners))
+	fmt.Printf("[setListener] (%s) subs: %d\n", ip, len(subs))
 
 	subs[id] = &Listener{
 		filters: filters,
