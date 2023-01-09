@@ -42,14 +42,23 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 	advancedDeleter, _ := store.(AdvancedDeleter)
 	advancedQuerier, _ := store.(AdvancedQuerier)
 
+	s.clientsMu.Lock()
+	defer s.clientsMu.Unlock()
+
+	// temp solution
+	if len(s.clients) > 700 {
+		w.WriteHeader(http.StatusForbidden)
+		fmt.Fprintf(w, "{\"message\":\"too many active clients\"}")
+		s.Log.Warningf("Too many active clients:")
+		return
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		s.Log.Errorf("failed to upgrade websocket: %v", err)
 		return
 	}
 
-	s.clientsMu.Lock()
-	defer s.clientsMu.Unlock()
 	s.clients[conn] = struct{}{}
 	// ticker := time.NewTicker(pingPeriod)
 
