@@ -78,7 +78,9 @@ func removeListenerId(ws *Connection, id string) {
 	if ok {
 		delete(listeners[ws], id)
 		if len(subs) == 0 {
-			removeListener(ws)
+			fmt.Println("[removeListenerId] before count", len(listeners))
+			delete(listeners, ws)
+			fmt.Println("[removeListenerId] after count", len(listeners))
 		}
 	}
 }
