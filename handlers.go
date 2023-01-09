@@ -81,9 +81,9 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 				conn.Close() // two closes? oO
 				delete(s.clients, conn)
 			}
-			fmt.Println("[defer 2] Listeners before", len(listeners))
+			fmt.Println("[defer 2]")
 			removeListener(connection)
-			fmt.Println("[defer 2] Listeners after", len(listeners))
+			fmt.Println("[defer 2]")
 		}()
 
 		conn.SetReadLimit(maxMessageSize)
@@ -254,12 +254,12 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		ticker := time.NewTicker(pingPeriod)
 		defer func() {
-			fmt.Println("[defer 3] Listeners before", len(listeners))
+			fmt.Println("[defer 3]")
 			s.clientsMu.Lock()
 			defer s.clientsMu.Unlock()
 			delete(s.clients, conn)
 			removeListener(connection)
-			fmt.Println("[defer 3] Listeners after", len(listeners))
+			fmt.Println("[defer 3]")
 			ticker.Stop()
 			conn.Close()
 		}()

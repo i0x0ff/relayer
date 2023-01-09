@@ -1,6 +1,7 @@
 package relayer
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -54,11 +55,14 @@ func setListener(id string, ws *Connection, filters nostr.Filters) {
 	listenersMutex.Lock()
 	defer listenersMutex.Unlock()
 
+	fmt.Println("[setListener] before count", len(listeners))
 	subs, ok := listeners[ws]
 	if !ok {
 		subs = make(map[string]*Listener)
 		listeners[ws] = subs
 	}
+
+	fmt.Println("[setListener] after count", len(listeners))
 
 	subs[id] = &Listener{
 		filters: filters,
@@ -74,7 +78,7 @@ func removeListenerId(ws *Connection, id string) {
 	if ok {
 		delete(listeners[ws], id)
 		if len(subs) == 0 {
-			delete(listeners, ws)
+			removeListener(ws)
 		}
 	}
 }
@@ -84,10 +88,14 @@ func removeListener(ws *Connection) {
 	listenersMutex.Lock()
 	defer listenersMutex.Unlock()
 
+	fmt.Println("[removeListener] before count", len(listeners))
+
 	_, ok := listeners[ws]
 	if ok {
 		delete(listeners, ws)
 	}
+
+	fmt.Println("[removeListener] after count", len(listeners))
 }
 
 func notifyListeners(event *nostr.Event) {
