@@ -51,11 +51,14 @@ func GetListeningFilters() nostr.Filters {
 	return respfilters
 }
 
-func getSubsCount(ws *Connection) int {
+func subsLimitReached(ws *Connection) bool {
 	listenersMutex.Lock()
 	defer listenersMutex.Unlock()
-	subs, _ := listeners[ws]
-	return len(subs)
+	subs, ok := listeners[ws]
+	if !ok {
+		return false
+	}
+	return len(subs) > 8
 }
 
 func setListener(id string, ws *Connection, filters nostr.Filters) {
