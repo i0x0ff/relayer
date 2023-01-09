@@ -233,6 +233,9 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 						ws.WriteJSON([]interface{}{"EOSE", id})
 					}
 
+					if subsLimitReached(connection) {
+						return
+					}
 					setListener(id, connection, filters)
 					break
 				case "CLOSE":
