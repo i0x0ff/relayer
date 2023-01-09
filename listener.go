@@ -52,6 +52,8 @@ func GetListeningFilters() nostr.Filters {
 }
 
 func getSubsCount(ws *Connection) int {
+	listenersMutex.Lock()
+	defer listenersMutex.Unlock()
 	subs, _ := listeners[ws]
 	return len(subs)
 }
