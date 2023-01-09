@@ -195,6 +195,7 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 					subsCount := getSubsCount(connection)
 					if subsCount > 8 {
 						notice = "too many active subs, max 8 allowed"
+						fmt.Println(notice)
 						return
 					}
 
