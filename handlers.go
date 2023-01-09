@@ -192,6 +192,12 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 						return
 					}
 
+					subsCount := getSubsCount(connection)
+					if subsCount > 8 {
+						notice = "too many active subs, max 8 allowed"
+						return
+					}
+
 					filters := make(nostr.Filters, len(request)-2)
 					for i, filterReq := range request[2:] {
 						if err := json.Unmarshal(

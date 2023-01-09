@@ -51,6 +51,14 @@ func GetListeningFilters() nostr.Filters {
 	return respfilters
 }
 
+func getSubsCount(ws *Connection) int {
+	subs, ok := listeners[ws]
+	if !ok {
+		return 0
+	}
+	return len(subs)
+}
+
 func setListener(id string, ws *Connection, filters nostr.Filters) {
 	listenersMutex.Lock()
 	defer listenersMutex.Unlock()
@@ -63,9 +71,6 @@ func setListener(id string, ws *Connection, filters nostr.Filters) {
 		subs = make(map[string]*Listener)
 		listeners[ws] = subs
 	}
-
-	fmt.Printf("[setListener] (%s) after count: %d\n", ip, len(listeners))
-	fmt.Printf("[setListener] (%s) subs: %d\n", ip, len(subs))
 
 	subs[id] = &Listener{
 		filters: filters,
