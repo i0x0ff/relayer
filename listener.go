@@ -55,14 +55,17 @@ func setListener(id string, ws *Connection, filters nostr.Filters) {
 	listenersMutex.Lock()
 	defer listenersMutex.Unlock()
 
-	fmt.Println("[setListener] before count", len(listeners))
+	ip := ws.httpHeader.Get("X-FORWARDED-FOR")
+
+	fmt.Printf("[setListener] (%s) before count: %d\n", ip, len(listeners))
 	subs, ok := listeners[ws]
 	if !ok {
 		subs = make(map[string]*Listener)
 		listeners[ws] = subs
 	}
 
-	fmt.Println("[setListener] after count", len(listeners))
+	fmt.Printf("[setListener] (%s) after count: %d\n", ip, len(listeners))
+	fmt.Printf("[setListener] (%s) subs: %d\n", ip, len(subs))
 
 	subs[id] = &Listener{
 		filters: filters,
