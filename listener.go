@@ -1,7 +1,6 @@
 package relayer
 
 import (
-	"fmt"
 	"net/http"
 	"sync"
 
@@ -62,17 +61,17 @@ func setListener(id string, ws *Connection, filters nostr.Filters) {
 	listenersMutex.Lock()
 	defer listenersMutex.Unlock()
 
-	ip := ws.httpHeader.Get("X-FORWARDED-FOR")
+	// ip := ws.httpHeader.Get("X-FORWARDED-FOR")
 
-	fmt.Printf("[setListener] (%s) before count: %d\n", ip, len(listeners))
+	// fmt.Printf("[setListener] (%s) before count: %d\n", ip, len(listeners))
 	subs, ok := listeners[ws]
 	if !ok {
 		subs = make(map[string]*Listener)
 		listeners[ws] = subs
 	}
 
-	fmt.Printf("[setListener] (%s) after count: %d\n", ip, len(listeners))
-	fmt.Printf("[setListener] (%s) subs: %d\n", ip, len(subs))
+	// fmt.Printf("[setListener] (%s) after count: %d\n", ip, len(listeners))
+	// fmt.Printf("[setListener] (%s) subs: %d\n", ip, len(subs))
 
 	subs[id] = &Listener{
 		filters: filters,
@@ -88,9 +87,9 @@ func removeListenerId(ws *Connection, id string) {
 	if ok {
 		delete(listeners[ws], id)
 		if len(subs) == 0 {
-			fmt.Println("[removeListenerId] before count", len(listeners))
+			// fmt.Println("[removeListenerId] before count", len(listeners))
 			delete(listeners, ws)
-			fmt.Println("[removeListenerId] after count", len(listeners))
+			// fmt.Println("[removeListenerId] after count", len(listeners))
 		}
 	}
 }
@@ -100,14 +99,14 @@ func removeListener(ws *Connection) {
 	listenersMutex.Lock()
 	defer listenersMutex.Unlock()
 
-	fmt.Println("[removeListener] before count", len(listeners))
+	// fmt.Println("[removeListener] before count", len(listeners))
 
 	_, ok := listeners[ws]
 	if ok {
 		delete(listeners, ws)
 	}
 
-	fmt.Println("[removeListener] after count", len(listeners))
+	// fmt.Println("[removeListener] after count", len(listeners))
 }
 
 func notifyListeners(event *nostr.Event) {

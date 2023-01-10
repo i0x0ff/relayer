@@ -46,7 +46,7 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 	defer s.clientsMu.Unlock()
 
 	// temp solution
-	if len(s.clients) > 700 {
+	if len(s.clients) > 1200 {
 		w.WriteHeader(http.StatusForbidden)
 		fmt.Fprintf(w, "{\"message\":\"too many active clients\"}")
 		s.Log.Warningf("Too many active clients:")
@@ -81,9 +81,9 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 				conn.Close() // two closes? oO
 				delete(s.clients, conn)
 			}
-			fmt.Println("[defer 2]")
-			removeListener(connection)
-			fmt.Println("[defer 2]")
+			// fmt.Println("[defer 2]")
+			// removeListener(connection)
+			// fmt.Println("[defer 2]")
 		}()
 
 		conn.SetReadLimit(maxMessageSize)
@@ -195,7 +195,7 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 					subsLimit := subsLimitReached(connection)
 					if subsLimit {
 						notice = "too many active subs, max 8 allowed"
-						fmt.Println(notice)
+						// fmt.Println(notice)
 						return
 					}
 
@@ -264,12 +264,12 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		ticker := time.NewTicker(pingPeriod)
 		defer func() {
-			fmt.Println("[defer 3]")
+			// fmt.Println("[defer 3]")
 			s.clientsMu.Lock()
 			defer s.clientsMu.Unlock()
 			delete(s.clients, conn)
 			removeListener(connection)
-			fmt.Println("[defer 3]")
+			// fmt.Println("[defer 3]")
 			ticker.Stop()
 			conn.Close()
 		}()
