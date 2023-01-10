@@ -46,7 +46,7 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, r *http.Request) {
 	defer s.clientsMu.Unlock()
 
 	// temp solution
-	if len(s.clients) > 1200 {
+	if len(s.clients) > 2000 {
 		w.WriteHeader(http.StatusForbidden)
 		fmt.Fprintf(w, "{\"message\":\"too many active clients\"}")
 		s.Log.Warningf("Too many active clients:")
